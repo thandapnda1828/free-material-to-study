@@ -1,0 +1,67 @@
+name: Build Free Material To Study APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'free material to use.zip'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Check ZIP file
+        run: |
+          ls -la
+          test -f "free material to use.zip"
+
+      - name: Extract Android project
+        run: |
+          mkdir -p android-project
+          unzip -q "free material to use.zip" -d android-project
+          echo "Extracted project files:"
+          find android-project -maxdepth 3 -type f | head -80
+
+      - name: Find Android project
+        id: find_project
+        run: |
+          FILE=$(find android-project -name settings.gradle -o -name settings.gradle.kts | head -1)
+          if [ -z "$FILE" ]; then
+            echo "ERROR: No Gradle Android project found in ZIP."
+            exit 1
+          fi
+          echo "dir=$(dirname "$FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Build debug APK
+        working-directory: .
+        run: |
+          cd "${{ steps.find_project.outputs.dir }}"
+          gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FreeMaterialToStudy-APK
+          path: android-project/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
