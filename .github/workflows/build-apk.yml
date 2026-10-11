@@ -29,7 +29,7 @@ jobs:
           gradle-version: '8.11.1'
 
       - name: Unpack Android project
-        run: unzip -q FreeMaterialToStudy-Android-Project.zip -d android-project
+        run: run: unzip -q "free material to use.zip" -d android-project
 
       - name: Build debug APK
         working-directory: android-project
